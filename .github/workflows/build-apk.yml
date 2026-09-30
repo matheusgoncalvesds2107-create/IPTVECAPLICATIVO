@@ -1,4 +1,4 @@
-name: EC IPTV - Gerar APK Android 7.0
+name: IPTVEC - Gerar APK Android 7
 
 on:
   workflow_dispatch:
@@ -7,13 +7,15 @@ on:
       - main
 
 jobs:
+
   build:
+
     runs-on: ubuntu-latest
 
     steps:
 
       # ==========================================================
-      # 1 - BAIXAR O REPOSITÓRIO
+      # 1 - BAIXAR PROJETO
       # ==========================================================
 
       - name: Baixar projeto
@@ -21,7 +23,7 @@ jobs:
 
 
       # ==========================================================
-      # 2 - CONFIGURAR JAVA 17
+      # 2 - JAVA 17
       # ==========================================================
 
       - name: Configurar Java 17
@@ -32,7 +34,7 @@ jobs:
 
 
       # ==========================================================
-      # 3 - CONFIGURAR GRADLE
+      # 3 - GRADLE
       # ==========================================================
 
       - name: Configurar Gradle
@@ -40,7 +42,7 @@ jobs:
 
 
       # ==========================================================
-      # 4 - CONFIGURAR ANDROIDX
+      # 4 - ANDROIDX
       # ==========================================================
 
       - name: Criar gradle.properties
@@ -53,7 +55,7 @@ jobs:
 
 
       # ==========================================================
-      # 5 - SETTINGS.GRADLE
+      # 5 - SETTINGS
       # ==========================================================
 
       - name: Criar settings.gradle
@@ -76,14 +78,14 @@ jobs:
               }
           }
 
-          rootProject.name = "EC_IPTV_Android"
+          rootProject.name = "IPTVEC"
 
           include(":app")
           EOF
 
 
       # ==========================================================
-      # 6 - BUILD.GRADLE
+      # 6 - BUILD PRINCIPAL
       # ==========================================================
 
       - name: Criar build.gradle
@@ -100,15 +102,20 @@ jobs:
       # 7 - CRIAR PASTAS
       # ==========================================================
 
-      - name: Criar estrutura do aplicativo
+      - name: Criar estrutura
         run: |
-          mkdir -p app/src/main/java/com/eciptv/mobile
+          mkdir -p app/src/main/java/com/iptvec/mobile
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/assets
+
+          # Remove ícones adaptive antigos
+          rm -rf app/src/main/res/mipmap-anydpi
+          rm -rf app/src/main/res/mipmap-anydpi-v26
 
 
       # ==========================================================
-      # 8 - APP/BUILD.GRADLE
+      # 8 - APP BUILD.GRADLE
       # ==========================================================
 
       - name: Criar app/build.gradle
@@ -121,18 +128,15 @@ jobs:
 
           android {
 
-              namespace 'com.eciptv.mobile'
+              namespace 'com.iptvec.mobile'
 
               compileSdk 35
 
               defaultConfig {
 
-                  applicationId 'com.eciptv.mobile'
+                  applicationId 'com.iptvec.mobile'
 
-                  /*
-                   * ANDROID 7.0
-                   * API 24
-                   */
+                  // Android 7.0
                   minSdk 24
 
                   targetSdk 35
@@ -142,9 +146,6 @@ jobs:
                   versionName "1.0.0"
               }
 
-              /*
-               * JAVA 17
-               */
               compileOptions {
 
                   sourceCompatibility JavaVersion.VERSION_17
@@ -152,9 +153,6 @@ jobs:
                   targetCompatibility JavaVersion.VERSION_17
               }
 
-              /*
-               * KOTLIN JVM 17
-               */
               kotlinOptions {
 
                   jvmTarget = '17'
@@ -175,60 +173,47 @@ jobs:
 
 
       # ==========================================================
-      # 9 - ANDROID MANIFEST
+      # 9 - NOME DO APLICATIVO
       # ==========================================================
 
-      - name: Criar AndroidManifest.xml
+      - name: Criar strings.xml
         run: |
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          cat > app/src/main/res/values/strings.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
 
-          <manifest
-              xmlns:android="http://schemas.android.com/apk/res/android">
+          <resources>
 
-              <uses-permission
-                  android:name="android.permission.INTERNET" />
+              <string name="app_name">IPTVEC</string>
 
-              <application
-
-                  android:allowBackup="true"
-
-                  android:hardwareAccelerated="true"
-
-                  android:label="EC IPTV"
-
-                  android:usesCleartextTraffic="true"
-
-                  android:theme="@style/AppTheme">
-
-                  <activity
-
-                      android:name=".MainActivity"
-
-                      android:screenOrientation="portrait"
-
-                      android:exported="true">
-
-                      <intent-filter>
-
-                          <action
-                              android:name="android.intent.action.MAIN" />
-
-                          <category
-                              android:name="android.intent.category.LAUNCHER" />
-
-                      </intent-filter>
-
-                  </activity>
-
-              </application>
-
-          </manifest>
+          </resources>
           EOF
 
 
       # ==========================================================
-      # 10 - TEMA
+      # 10 - CORES
+      # ==========================================================
+
+      - name: Criar cores.xml
+        run: |
+          cat > app/src/main/res/values/colors.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+
+          <resources>
+
+              <color name="iptvec_black">#05070B</color>
+
+              <color name="iptvec_blue">#00A8FF</color>
+
+              <color name="iptvec_cyan">#00C8FF</color>
+
+              <color name="iptvec_white">#FFFFFF</color>
+
+          </resources>
+          EOF
+
+
+      # ==========================================================
+      # 11 - TEMA
       # ==========================================================
 
       - name: Criar tema
@@ -246,6 +231,10 @@ jobs:
                       sans
                   </item>
 
+                  <item name="android:windowNoTitle">
+                      true
+                  </item>
+
                   <item name="android:statusBarColor">
                       #000000
                   </item>
@@ -258,6 +247,10 @@ jobs:
                       false
                   </item>
 
+                  <item name="android:windowActionModeOverlay">
+                      true
+                  </item>
+
               </style>
 
           </resources>
@@ -265,17 +258,206 @@ jobs:
 
 
       # ==========================================================
-      # 11 - MAIN ACTIVITY
+      # 12 - ÍCONE IPTVEC
+      #
+      # IMPORTANTE:
+      # Não usa adaptive-icon.
+      # Compatível com Android 7.0 / API 24.
       # ==========================================================
 
-      - name: Criar MainActivity.kt
+      - name: Criar icone IPTVEC
         run: |
-          cat > app/src/main/java/com/eciptv/mobile/MainActivity.kt <<'EOF'
-          package com.eciptv.mobile
+          cat > app/src/main/res/drawable/ic_iptvec.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+
+          <vector
+              xmlns:android="http://schemas.android.com/apk/res/android"
+
+              android:width="108dp"
+
+              android:height="108dp"
+
+              android:viewportWidth="108"
+
+              android:viewportHeight="108">
+
+              <!-- Fundo -->
+
+              <path
+
+                  android:fillColor="#05070B"
+
+                  android:pathData="M0,0h108v108h-108z" />
+
+
+              <!-- Antenas -->
+
+              <path
+
+                  android:fillColor="#00A8FF"
+
+                  android:pathData="
+                  M27,31
+                  L39,20
+                  L41,22
+                  L31,34
+                  Z" />
+
+              <path
+
+                  android:fillColor="#00A8FF"
+
+                  android:pathData="
+                  M81,31
+                  L69,20
+                  L67,22
+                  L77,34
+                  Z" />
+
+
+              <!-- TV -->
+
+              <path
+
+                  android:fillColor="#00A8FF"
+
+                  android:pathData="
+                  M25,33
+                  H83
+                  C89,33 93,37 93,43
+                  V74
+                  C93,80 89,84 83,84
+                  H25
+                  C19,84 15,80 15,74
+                  V43
+                  C15,37 19,33 25,33
+                  Z" />
+
+
+              <!-- Tela -->
+
+              <path
+
+                  android:fillColor="#07101A"
+
+                  android:pathData="
+                  M26,40
+                  H82
+                  C85,40 87,42 87,45
+                  V72
+                  C87,75 85,77 82,77
+                  H26
+                  C23,77 21,75 21,72
+                  V45
+                  C21,42 23,40 26,40
+                  Z" />
+
+
+              <!-- Play -->
+
+              <path
+
+                  android:fillColor="#FFFFFF"
+
+                  android:pathData="
+                  M47,47
+                  L72,60
+                  L47,73
+                  Z" />
+
+
+              <!-- Base -->
+
+              <path
+
+                  android:fillColor="#00C8FF"
+
+                  android:pathData="
+                  M18,91
+                  H90
+                  V96
+                  H18
+                  Z" />
+
+          </vector>
+          EOF
+
+
+      # ==========================================================
+      # 13 - MANIFEST
+      # ==========================================================
+
+      - name: Criar AndroidManifest.xml
+        run: |
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+
+          <manifest
+              xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission
+                  android:name="android.permission.INTERNET" />
+
+
+              <application
+
+                  android:allowBackup="true"
+
+                  android:hardwareAccelerated="true"
+
+                  android:label="@string/app_name"
+
+                  android:icon="@drawable/ic_iptvec"
+
+                  android:roundIcon="@drawable/ic_iptvec"
+
+                  android:usesCleartextTraffic="true"
+
+                  android:theme="@style/AppTheme">
+
+
+                  <activity
+
+                      android:name=".MainActivity"
+
+                      android:screenOrientation="portrait"
+
+                      android:exported="true">
+
+
+                      <intent-filter>
+
+                          <action
+                              android:name="android.intent.action.MAIN" />
+
+                          <category
+                              android:name="android.intent.category.LAUNCHER" />
+
+                      </intent-filter>
+
+
+                  </activity>
+
+
+              </application>
+
+          </manifest>
+          EOF
+
+
+      # ==========================================================
+      # 14 - MAIN ACTIVITY
+      # ==========================================================
+
+      - name: Criar MainActivity
+        run: |
+          cat > app/src/main/java/com/iptvec/mobile/MainActivity.kt <<'EOF'
+          package com.iptvec.mobile
 
           import android.annotation.SuppressLint
           import android.app.Activity
           import android.os.Bundle
+          import android.view.View
           import android.webkit.WebChromeClient
           import android.webkit.WebSettings
           import android.webkit.WebView
@@ -285,14 +467,38 @@ jobs:
 
               private lateinit var webView: WebView
 
+
+              private fun telaCheia() {
+
+                  window.decorView.systemUiVisibility =
+
+                      View.SYSTEM_UI_FLAG_FULLSCREEN or
+
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+
+                      View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+
+                      View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+
+                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+              }
+
+
               @SuppressLint("SetJavaScriptEnabled")
+
               override fun onCreate(
                   savedInstanceState: Bundle?
               ) {
 
                   super.onCreate(savedInstanceState)
 
+                  telaCheia()
+
+
                   webView = WebView(this)
+
 
                   webView.settings.apply {
 
@@ -310,20 +516,39 @@ jobs:
                           WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                   }
 
+
                   webView.webViewClient =
                       WebViewClient()
+
 
                   webView.webChromeClient =
                       WebChromeClient()
 
+
                   setContentView(webView)
+
 
                   webView.loadUrl(
                       "file:///android_asset/index.html"
                   )
               }
 
+
+              override fun onWindowFocusChanged(
+                  hasFocus: Boolean
+              ) {
+
+                  super.onWindowFocusChanged(hasFocus)
+
+                  if (hasFocus) {
+
+                      telaCheia()
+                  }
+              }
+
+
               @Deprecated("Deprecated in Java")
+
               override fun onBackPressed() {
 
                   if (webView.canGoBack()) {
@@ -335,40 +560,31 @@ jobs:
                       super.onBackPressed()
                   }
               }
+
           }
           EOF
 
 
       # ==========================================================
-      # 12 - PREPARAR O HTML
-      # ==========================================================
-      #
-      # Se o index.html já estiver em:
-      #
-      # app/src/main/assets/index.html
-      #
-      # ele será mantido.
-      #
-      # Caso não esteja, o workflow procura outro HTML no projeto.
-      #
+      # 15 - HTML
       # ==========================================================
 
-      - name: Preparar HTML do aplicativo
+      - name: Preparar HTML
         shell: bash
         run: |
 
           DESTINO="app/src/main/assets/index.html"
 
+
           if [ -f "$DESTINO" ]; then
 
-              echo "======================================"
-              echo "HTML já está no lugar correto."
+              echo "HTML já existe."
+
               echo "$DESTINO"
-              echo "======================================"
 
           else
 
-              echo "Procurando arquivo HTML..."
+              echo "Procurando HTML..."
 
               HTML=$(find . \
                 -type f \
@@ -376,6 +592,7 @@ jobs:
                 -not -path "./.git/*" \
                 -not -path "./app/src/main/assets/*" \
                 | head -n 1)
+
 
               if [ -n "$HTML" ]; then
 
@@ -386,11 +603,7 @@ jobs:
 
               else
 
-                  echo "ERRO: nenhum arquivo HTML encontrado."
-
-                  echo ""
-                  echo "Coloque o HTML do aplicativo no repositório."
-                  echo ""
+                  echo "ERRO: HTML não encontrado."
 
                   exit 1
 
@@ -400,46 +613,40 @@ jobs:
 
 
       # ==========================================================
-      # 13 - MOSTRAR ESTRUTURA
+      # 16 - VERIFICAR ÍCONE
       # ==========================================================
 
-      - name: Verificar arquivos
+      - name: Verificar icone
         run: |
 
-          echo "======================================"
-          echo "ARQUIVOS DO PROJETO"
-          echo "======================================"
+          echo "Ícone IPTVEC:"
 
-          find app -type f | sort
-
-          echo ""
-          echo "======================================"
-          echo "HTML PRINCIPAL"
-          echo "======================================"
-
-          ls -lh app/src/main/assets/index.html
+          ls -lh \
+            app/src/main/res/drawable/ic_iptvec.xml
 
 
       # ==========================================================
-      # 14 - VERIFICAR JAVA
+      # 17 - VERIFICAR JAVA
       # ==========================================================
 
       - name: Verificar Java
         run: |
+
           java -version
 
 
       # ==========================================================
-      # 15 - GERAR APK
+      # 18 - GERAR APK
       # ==========================================================
 
       - name: Gerar APK
         run: |
+
           gradle :app:assembleDebug --stacktrace
 
 
       # ==========================================================
-      # 16 - PUBLICAR APK
+      # 19 - PUBLICAR APK
       # ==========================================================
 
       - name: Publicar APK
@@ -447,7 +654,7 @@ jobs:
 
         with:
 
-          name: EC-IPTV-Android-7
+          name: IPTVEC-Android-7
 
           path: app/build/outputs/apk/debug/app-debug.apk
 
