@@ -12,14 +12,36 @@ jobs:
 
     steps:
 
-      - name: Baixar repositorio
+      # =========================================================
+      # 1. BAIXAR O REPOSITÓRIO
+      # =========================================================
+
+      - name: Baixar projeto
         uses: actions/checkout@v4
+
+
+      # =========================================================
+      # 2. JAVA 17
+      # =========================================================
 
       - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+
+      # =========================================================
+      # 3. GRADLE
+      # =========================================================
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+
+      # =========================================================
+      # 4. ANDROIDX
+      # =========================================================
 
       - name: Criar gradle.properties
         run: |
@@ -28,6 +50,11 @@ jobs:
           android.enableJetifier=true
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           EOF
+
+
+      # =========================================================
+      # 5. SETTINGS
+      # =========================================================
 
       - name: Criar settings.gradle
         run: |
@@ -50,8 +77,14 @@ jobs:
           }
 
           rootProject.name = "EC_IPTV_Android"
+
           include(":app")
           EOF
+
+
+      # =========================================================
+      # 6. BUILD PRINCIPAL
+      # =========================================================
 
       - name: Criar build.gradle
         run: |
@@ -62,13 +95,23 @@ jobs:
           }
           EOF
 
-      - name: Criar estrutura Android
+
+      # =========================================================
+      # 7. CRIAR PASTAS
+      # =========================================================
+
+      - name: Criar estrutura
         run: |
           mkdir -p app/src/main/java/com/eciptv/mobile
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/assets
 
-      - name: Criar app build.gradle
+
+      # =========================================================
+      # 8. APP BUILD.GRADLE
+      # =========================================================
+
+      - name: Criar app/build.gradle
         run: |
           cat > app/build.gradle <<'EOF'
           plugins {
@@ -77,54 +120,103 @@ jobs:
           }
 
           android {
+
               namespace 'com.eciptv.mobile'
+
               compileSdk 35
 
               defaultConfig {
+
                   applicationId 'com.eciptv.mobile'
 
-                  // Android 7.0 / API 24
+                  /*
+                   * ANDROID 7.0
+                   * API 24
+                   */
                   minSdk 24
 
                   targetSdk 35
 
                   versionCode 1
+
                   versionName "1.0.0"
+              }
+
+              /*
+               * JAVA 17
+               */
+              compileOptions {
+
+                  sourceCompatibility JavaVersion.VERSION_17
+
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+
+              /*
+               * KOTLIN 17
+               */
+              kotlinOptions {
+
+                  jvmTarget = '17'
               }
           }
 
           dependencies {
+
               implementation 'androidx.core:core-ktx:1.15.0'
+
               implementation 'androidx.appcompat:appcompat:1.7.0'
+
               implementation 'androidx.activity:activity-ktx:1.10.0'
+
               implementation 'androidx.webkit:webkit:1.12.1'
           }
           EOF
+
+
+      # =========================================================
+      # 9. ANDROID MANIFEST
+      # =========================================================
 
       - name: Criar AndroidManifest.xml
         run: |
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
 
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <manifest
+              xmlns:android="http://schemas.android.com/apk/res/android">
 
-              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission
+                  android:name="android.permission.INTERNET" />
 
               <application
+
                   android:allowBackup="true"
+
                   android:hardwareAccelerated="true"
+
                   android:label="EC IPTV"
+
                   android:usesCleartextTraffic="true"
+
                   android:theme="@style/AppTheme">
 
                   <activity
+
                       android:name=".MainActivity"
+
                       android:screenOrientation="portrait"
+
                       android:exported="true">
 
                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
+
+                          <action
+                              android:name="android.intent.action.MAIN" />
+
+                          <category
+                              android:name="android.intent.category.LAUNCHER" />
+
                       </intent-filter>
 
                   </activity>
@@ -133,6 +225,11 @@ jobs:
 
           </manifest>
           EOF
+
+
+      # =========================================================
+      # 10. TEMA
+      # =========================================================
 
       - name: Criar tema
         run: |
@@ -145,18 +242,33 @@ jobs:
                   name="AppTheme"
                   parent="Theme.AppCompat.DayNight.NoActionBar">
 
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:windowActionModeOverlay">true</item>
-                  <item name="android:statusBarColor">#000000</item>
-                  <item name="android:navigationBarColor">#000000</item>
-                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:fontFamily">
+                      sans
+                  </item>
+
+                  <item name="android:statusBarColor">
+                      #000000
+                  </item>
+
+                  <item name="android:navigationBarColor">
+                      #000000
+                  </item>
+
+                  <item name="android:windowLightStatusBar">
+                      false
+                  </item>
 
               </style>
 
           </resources>
           EOF
 
-      - name: Criar MainActivity
+
+      # =========================================================
+      # 11. MAIN ACTIVITY
+      # =========================================================
+
+      - name: Criar MainActivity.kt
         run: |
           cat > app/src/main/java/com/eciptv/mobile/MainActivity.kt <<'EOF'
           package com.eciptv.mobile
@@ -174,23 +286,35 @@ jobs:
               private lateinit var webView: WebView
 
               @SuppressLint("SetJavaScriptEnabled")
-              override fun onCreate(savedInstanceState: Bundle?) {
+              override fun onCreate(
+                  savedInstanceState: Bundle?
+              ) {
+
                   super.onCreate(savedInstanceState)
 
                   webView = WebView(this)
 
                   webView.settings.apply {
+
                       javaScriptEnabled = true
+
                       domStorageEnabled = true
+
                       mediaPlaybackRequiresUserGesture = false
+
                       allowFileAccess = true
+
                       allowContentAccess = true
+
                       mixedContentMode =
                           WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                   }
 
-                  webView.webViewClient = WebViewClient()
-                  webView.webChromeClient = WebChromeClient()
+                  webView.webViewClient =
+                      WebViewClient()
+
+                  webView.webChromeClient =
+                      WebChromeClient()
 
                   setContentView(webView)
 
@@ -199,435 +323,84 @@ jobs:
                   )
               }
 
+              @Deprecated("Deprecated in Java")
               override fun onBackPressed() {
 
                   if (webView.canGoBack()) {
+
                       webView.goBack()
+
                   } else {
+
                       super.onBackPressed()
                   }
               }
           }
           EOF
 
-      - name: Copiar aplicativo HTML
+
+      # =========================================================
+      # 12. USAR O HTML DO SEU PROJETO
+      # =========================================================
+
+      - name: Preparar HTML do aplicativo
         run: |
+
           if [ -f "Aplicativo IPTV EC Mobile.html" ]; then
-            cp "Aplicativo IPTV EC Mobile.html" app/src/main/assets/index.html
+
+            cp "Aplicativo IPTV EC Mobile.html" \
+            app/src/main/assets/index.html
+
           elif [ -f "index.html" ]; then
-            cp "index.html" app/src/main/assets/index.html
+
+            cp "index.html" \
+            app/src/main/assets/index.html
+
           else
-            cat > app/src/main/assets/index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="pt-BR">
 
-          <head>
+            echo "ERRO: HTML do aplicativo não encontrado."
 
-              <meta charset="UTF-8">
+            exit 1
 
-              <meta
-                  name="viewport"
-                  content="width=device-width,
-                  initial-scale=1.0,
-                  maximum-scale=1.0,
-                  user-scalable=no">
-
-              <title>EC IPTV</title>
-
-              <style>
-
-                  * {
-                      box-sizing: border-box;
-                  }
-
-                  html,
-                  body {
-                      margin: 0;
-                      padding: 0;
-                      width: 100%;
-                      height: 100%;
-                      background: #000;
-                      color: white;
-                      font-family: Arial, sans-serif;
-                  }
-
-                  body {
-                      overflow: hidden;
-                  }
-
-                  .app {
-                      width: 100%;
-                      height: 100%;
-                      background: #000;
-                      display: flex;
-                      flex-direction: column;
-                  }
-
-                  .content {
-                      flex: 1;
-                      overflow-y: auto;
-                      padding-bottom: 70px;
-                  }
-
-                  .page {
-                      display: none;
-                      padding: 20px;
-                  }
-
-                  .page.active {
-                      display: block;
-                  }
-
-                  h1 {
-                      color: #00a8ff;
-                  }
-
-                  input {
-                      width: 100%;
-                      padding: 14px;
-                      background: #121318;
-                      color: white;
-                      border: 1px solid #333;
-                      border-radius: 8px;
-                      margin-bottom: 10px;
-                  }
-
-                  button {
-                      border: 0;
-                      border-radius: 8px;
-                      padding: 12px 18px;
-                      background: #00a8ff;
-                      color: white;
-                      font-weight: bold;
-                  }
-
-                  .player {
-                      width: 100%;
-                      aspect-ratio: 16 / 9;
-                      background: #111;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      margin-bottom: 20px;
-                  }
-
-                  .bottom {
-                      position: fixed;
-                      bottom: 0;
-                      left: 0;
-                      right: 0;
-                      height: 65px;
-                      background: #050505;
-                      border-top: 1px solid #222;
-                      display: flex;
-                      justify-content: space-around;
-                      align-items: center;
-                  }
-
-                  .nav {
-                      background: transparent;
-                      color: #777;
-                      padding: 5px;
-                  }
-
-                  .nav.active {
-                      color: #00a8ff;
-                  }
-
-                  .category {
-                      background: #121318;
-                      margin: 8px 0;
-                      padding: 15px;
-                      border-radius: 8px;
-                  }
-
-              </style>
-
-          </head>
-
-          <body>
-
-          <div class="app">
-
-              <div class="content">
-
-                  <section id="inicio" class="page active">
-
-                      <h1>EC IPTV</h1>
-
-                      <h2>Bem-vindo</h2>
-
-                      <p>
-                          Seu aplicativo IPTV.
-                      </p>
-
-                  </section>
-
-
-                  <section id="aovivo" class="page">
-
-                      <h1>Ao vivo</h1>
-
-                      <div class="player">
-
-                          <video
-                              id="player"
-                              controls
-                              autoplay
-                              muted
-                              style="width:100%;height:100%;">
-                          </video>
-
-                      </div>
-
-                      <div id="canais">
-
-                          <div class="category">
-                              Nenhum canal carregado.
-                          </div>
-
-                      </div>
-
-                  </section>
-
-
-                  <section id="jogos" class="page">
-
-                      <h1>Jogos</h1>
-
-                      <div class="category">
-                          Jogos populares
-                      </div>
-
-                  </section>
-
-
-                  <section id="perfil" class="page">
-
-                      <h1>Perfil</h1>
-
-                      <p>
-                          Carregar sua lista M3U
-                      </p>
-
-                      <input
-                          id="m3u"
-                          type="text"
-                          placeholder="Cole aqui o link da sua lista M3U">
-
-                      <button onclick="carregarM3U()">
-                          Carregar e Atualizar Canais
-                      </button>
-
-                  </section>
-
-              </div>
-
-
-              <div class="bottom">
-
-                  <button
-                      class="nav active"
-                      onclick="pagina('inicio', this)">
-                      Início
-                  </button>
-
-                  <button
-                      class="nav"
-                      onclick="pagina('aovivo', this)">
-                      Ao vivo
-                  </button>
-
-                  <button
-                      class="nav"
-                      onclick="pagina('jogos', this)">
-                      Jogos
-                  </button>
-
-                  <button
-                      class="nav"
-                      onclick="pagina('perfil', this)">
-                      Perfil
-                  </button>
-
-              </div>
-
-          </div>
-
-
-          <script>
-
-              function pagina(nome, botao) {
-
-                  document
-                      .querySelectorAll('.page')
-                      .forEach(function(page) {
-                          page.classList.remove('active');
-                      });
-
-                  document
-                      .getElementById(nome)
-                      .classList.add('active');
-
-                  document
-                      .querySelectorAll('.nav')
-                      .forEach(function(nav) {
-                          nav.classList.remove('active');
-                      });
-
-                  botao.classList.add('active');
-              }
-
-
-              async function carregarM3U() {
-
-                  const url =
-                      document
-                      .getElementById('m3u')
-                      .value
-                      .trim();
-
-                  if (!url) {
-
-                      alert(
-                          'Cole o link da sua lista M3U.'
-                      );
-
-                      return;
-                  }
-
-                  try {
-
-                      const resposta =
-                          await fetch(url);
-
-                      const texto =
-                          await resposta.text();
-
-                      const linhas =
-                          texto.split(/\r?\n/);
-
-                      const canais =
-                          document
-                          .getElementById('canais');
-
-                      canais.innerHTML = '';
-
-                      let nome = '';
-
-                      let numero = 1;
-
-                      for (
-                          let i = 0;
-                          i < linhas.length;
-                          i++
-                      ) {
-
-                          const linha =
-                              linhas[i].trim();
-
-                          if (
-                              linha.startsWith('#EXTINF:')
-                          ) {
-
-                              const partes =
-                                  linha.split(',');
-
-                              nome =
-                                  partes[
-                                      partes.length - 1
-                                  ].trim();
-
-                          }
-
-                          else if (
-                              linha &&
-                              !linha.startsWith('#') &&
-                              nome
-                          ) {
-
-                              const item =
-                                  document.createElement(
-                                      'div'
-                                  );
-
-                              item.className =
-                                  'category';
-
-                              item.innerHTML =
-                                  numero +
-                                  ' - ' +
-                                  nome;
-
-                              item.onclick =
-                                  function() {
-
-                                      reproduzir(linha);
-                                  };
-
-                              canais.appendChild(item);
-
-                              nome = '';
-
-                              numero++;
-                          }
-                      }
-
-                      pagina(
-                          'aovivo',
-                          document.querySelectorAll(
-                              '.nav'
-                          )[1]
-                      );
-
-                      alert(
-                          'Lista M3U carregada!'
-                      );
-
-                  }
-
-                  catch (erro) {
-
-                      alert(
-                          'Não foi possível carregar a lista M3U. Verifique o link e o acesso do servidor.'
-                      );
-                  }
-              }
-
-
-              function reproduzir(url) {
-
-                  const player =
-                      document.getElementById(
-                          'player'
-                      );
-
-                  player.src = url;
-
-                  player.play().catch(
-                      function() {}
-                  );
-              }
-
-          </script>
-
-          </body>
-          </html>
-          EOF
           fi
 
-      - name: Verificar projeto
+
+      # =========================================================
+      # 13. VERIFICAR CONFIGURAÇÃO
+      # =========================================================
+
+      - name: Verificar Java
         run: |
-          echo "=== Projeto ==="
-          find . -maxdepth 4 -type f | sort
+          java -version
+
+
+      - name: Verificar Gradle
+        run: |
+          gradle --version
+
+
+      # =========================================================
+      # 14. GERAR APK
+      # =========================================================
 
       - name: Gerar APK
         run: |
-          gradle :app:assembleDebug
+          gradle :app:assembleDebug \
+            --stacktrace
+
+
+      # =========================================================
+      # 15. PUBLICAR APK
+      # =========================================================
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
+
         with:
+
           name: EC-IPTV-Android-7-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+
           if-no-files-found: error
