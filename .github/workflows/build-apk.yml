@@ -281,13 +281,14 @@ jobs:
       # PROCURAR O HTML DO APLICATIVO
       # ==========================================================
 
-      - name: Procurar HTML
+            - name: Procurar HTML
         run: |
 
           HTML=$(find . \
             -type f \
             -iname "*.html" \
             -not -path "./.git/*" \
+            -not -path "./app/src/main/assets/*" \
             | head -n 1)
 
           if [ -n "$HTML" ]; then
@@ -295,22 +296,19 @@ jobs:
               echo "HTML encontrado:"
               echo "$HTML"
 
-              cp "$HTML" \
-                app/src/main/assets/index.html
+              cp "$HTML" app/src/main/assets/index.html
 
           else
 
-              echo "ERRO: nenhum arquivo HTML foi encontrado."
+              echo "HTML já está no assets ou não encontrado."
 
-              echo ""
-              echo "Coloque o arquivo HTML do aplicativo"
-              echo "dentro do repositorio do GitHub."
-              echo ""
-
-              exit 1
+              if [ -f "app/src/main/assets/index.html" ]; then
+                  echo "Usando index.html existente."
+              else
+                  exit 1
+              fi
 
           fi
-
 
       # ==========================================================
       # VERIFICAR
