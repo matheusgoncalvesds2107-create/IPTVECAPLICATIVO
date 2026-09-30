@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>IPTVEC</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#05070a;color:#fff;font-family:Arial,sans-serif}
+.app{height:100vh;display:flex;flex-direction:column;max-width:600px;margin:auto}
+header{padding:18px 18px 12px;background:#05070a;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:28px;font-weight:900;color:#00c8ff}.sub{font-size:11px;color:#71808c}
+main{flex:1;overflow:auto;padding-bottom:82px}
+.player{background:#000;position:relative;aspect-ratio:16/9}
+video{width:100%;height:100%;background:#000}
+.now{padding:10px 14px;background:#0b1015;border-bottom:1px solid #17212a;font-weight:bold}
+.status{padding:10px 14px;font-size:12px;color:#00c8ff}
+.search{margin:12px;padding:12px;border-radius:12px;background:#10161c;border:1px solid #1b2a34;color:#fff;width:calc(100% - 24px)}
+.group{margin:12px;border:1px solid #17232c;border-radius:12px;overflow:hidden;background:#090d11}
+.group h3{margin:0;padding:12px 14px;background:#0d141a;color:#00c8ff;font-size:14px}
+.channel{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid #111b22;cursor:pointer}
+.channel:active{background:#101a21}.num{color:#5d6b75;font-size:11px;width:26px}.cn{font-size:13px;font-weight:bold}
+.empty{padding:35px 20px;text-align:center;color:#71808c}
+nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:#080d12;border-top:1px solid #17232c;display:flex;justify-content:space-around;align-items:center;z-index:10}
+nav button{background:none;border:0;color:#6e7c86;font-size:11px}nav button.active{color:#00c8ff}
+.panel{padding:16px}.panel h2{font-size:20px}.btn{width:100%;padding:13px;border:0;border-radius:10px;background:#00a8df;color:#fff;font-weight:bold;margin-top:8px}
+input[type=text]{width:100%;padding:13px;border-radius:10px;border:1px solid #26343e;background:#0d1318;color:#fff}
+.file{margin-top:10px;color:#aaa;font-size:12px;width:100%}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="logo">IPTVEC</div><div class="sub">TV • FILMES • ESPORTES</div></div><div id="count" class="sub">0 canais</div></header>
+<main>
+<section id="ao">
+<div class="player"><video id="video" controls playsinline></video></div>
+<div class="now" id="now">Selecione um canal</div>
+<div class="status" id="status">Nenhuma lista carregada.</div>
+<input class="search" id="search" placeholder="Pesquisar canal..." oninput="render()">
+<div id="list"><div class="empty">Carregue sua lista M3U em Configurações.</div></div>
+</section>
+<section id="config" style="display:none">
+<div class="panel">
+<h2>Minha lista M3U</h2>
+<p class="sub">Cole o endereço da sua lista ou escolha um arquivo.</p>
+<input id="url" type="text" placeholder="URL da lista M3U">
+<button class="btn" onclick="loadUrl()">Carregar lista</button>
+<input id="file" class="file" type="file" accept=".m3u,.m3u8,text/plain">
+<p class="sub" style="margin-top:16px">A lista é lida localmente pelo aplicativo quando você escolhe um arquivo.</p>
+</div>
+</section>
+</main>
+<nav>
+<button id="bAo" class="active" onclick="tab('ao')">📺<br>Ao vivo</button>
+<button id="bCfg" onclick="tab('config')">⚙️<br>Lista</button>
+</nav>
+</div>
+<script>
+let data=[],hls=null;
+const $=id=>document.getElementById(id);
+function tab(x){$('ao').style.display=x==='ao'?'block':'none';$('config').style.display=x==='config'?'block':'none';$('bAo').classList.toggle('active',x==='ao');$('bCfg').classList.toggle('active',x==='config')}
+function msg(x,err=false){$('status').textContent=x;$('status').style.color=err?'#ff6574':'#00c8ff'}
+function parse(txt){
+ data=[];let group='OUTROS',pending=null;
+ txt.replace(/^\ufeff/,'').split(/\r?\n/).forEach(line=>{
+  line=line.trim();if(!line)return;
+  if(line.startsWith('#EXTGRP:')){group=line.substring(8).trim()||'OUTROS';return}
+  if(line.startsWith('#EXTINF:')){
+   let gm=line.match(/group-title=["']([^"']*)["']/i);
+   let name=line.substring(line.lastIndexOf(',')+1).trim()||'Canal';
+   pending={name,group:(gm?gm[1]:group)||'OUTROS'};
+   return;
+  }
+  if(!line.startsWith('#')&&pending){
+   data.push({name:pending.name,group:pending.group,url:line});pending=null;
+  }
+ });
+ $('count').textContent=data.length+' canais';
+ render();
+ if(data.length){msg(data.length+' canais carregados');tab('ao')}else msg('A lista não contém canais reconhecidos.',true);
+}
+function render(){
+ let q=$('search').value.toLowerCase(),groups={};
+ data.filter(x=>x.name.toLowerCase().includes(q)).forEach(x=>(groups[x.group]??=[]).push(x));
+ $('list').innerHTML='';
+ let n=0;
+ Object.entries(groups).forEach(([g,chs])=>{
+  let d=document.createElement('div');d.className='group';d.innerHTML='<h3>'+esc(g)+' ('+chs.length+')</h3>';
+  chs.forEach(c=>{n++;let e=document.createElement('div');e.className='channel';e.innerHTML='<span class="num">'+String(n).padStart(3,'0')+'</span><span class="cn">'+esc(c.name)+'</span>';e.onclick=()=>play(c);d.appendChild(e)});
+  $('list').appendChild(d);
+ });
+ if(!Object.keys(groups).length)$('list').innerHTML='<div class="empty">Nenhum canal encontrado.</div>';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function play(c){
+ $('now').textContent=c.name;$('status').textContent='Conectando...';
+ let v=$('video');if(hls){hls.destroy();hls=null}v.pause();v.removeAttribute('src');v.load();
+ if(/\.m3u8($|\?)/i.test(c.url)&&Hls.isSupported()){
+  hls=new Hls();hls.loadSource(c.url);hls.attachMedia(v);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>{v.play().catch(()=>{});$('status').textContent='Reproduzindo'});
+  hls.on(Hls.Events.ERROR,(_,x)=>{if(x.fatal)$('status').textContent='Não foi possível reproduzir este canal.'});
+ }else{v.src=c.url;v.play().then(()=>{$('status').textContent='Reproduzindo'}).catch(()=>{$('status').textContent='Toque no ▶ para iniciar'})}
+}
+function loadUrl(){
+ let u=$('url').value.trim();if(!u)return msg('Cole uma URL M3U.',true);
+ msg('Baixando lista...');
+ fetch(u).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.text()}).then(parse).catch(e=>msg('Não foi possível baixar a lista: '+e.message,true));
+}
+$('file').addEventListener('change',e=>{let f=e.target.files[0];if(f){msg('Lendo '+f.name+'...');f.text().then(parse).catch(()=>msg('Erro ao ler arquivo.',true))}});
+</script>
+</body>
+</html>
