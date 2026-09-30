@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IPTVEC</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- HLS.js for IPTV m3u8 playback -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .bg-card {
+            background-color: #121318;
+        }
+        .bg-card-header {
+            background-color: #1a1c23;
+        }
+        .active-tab {
+            color: #00a8ff;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-zinc-950 p-0 sm:p-4">
+
+    <!-- Container do Smartphone -->
+    <div class="w-full h-[100vh] bg-black overflow-hidden flex flex-col relative">
+
+        <!-- CONTEÚDO PRINCIPAL (Área Rolável) -->
+        <div id="app-content" class="flex-1 overflow-y-auto hide-scrollbar relative pb-16">
+
+            <!-- ================= TELA: INÍCIO ================= -->
+            <div id="page-inicio" class="page-content hidden">
+                <!-- Header Topo -->
+                <div class="relative w-full h-[400px]">
+                    <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" alt="Hero Banner">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60"></div>
+                    
+                    <div class="absolute top-4 left-4 right-4 flex items-center justify-between">
+                        <span class="text-3xl font-extrabold tracking-tighter text-white">IPTVEC</span>
+                        <div class="flex items-center space-x-3">
+                            <button class="p-2 rounded-full bg-black/40 backdrop-blur-md"><i data-lucide="search" class="w-5 h-5 text-white"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Category Pills Horizontal Topo -->
+                    <div class="absolute top-16 left-4 right-0 overflow-x-auto hide-scrollbar flex space-x-2 pr-4">
+                        <button class="px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-sm font-medium border border-white/30 whitespace-nowrap">Home</button>
+                        <button class="px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-zinc-300 text-sm font-medium border border-white/10 whitespace-nowrap">Filmes</button>
+                        <button class="px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-zinc-300 text-sm font-medium border border-white/10 whitespace-nowrap">Séries</button>
+                        <button class="px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-zinc-300 text-sm font-medium border border-white/10 whitespace-nowrap">Infantil</button>
+                    </div>
+
+                    <div class="absolute bottom-6 left-4 right-4">
+                        <h2 class="text-2xl font-black text-cyan-400 uppercase tracking-wide drop-shadow-md">TRÊS HORAS PARA VIVER</h2>
+                        <p class="text-xs text-zinc-300 mt-1">Ação • Suspense • 2026</p>
+                    </div>
+                </div>
+
+                <!-- Seção Filmes em Alta -->
+                <div class="px-4 mt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-bold text-white">Filmes em Alta</h3>
+                        <button class="text-xs text-zinc-400 border border-zinc-700 rounded-full px-3 py-1">Ver mais</button>
+                    </div>
+                    <div class="flex space-x-3 overflow-x-auto hide-scrollbar pb-2">
+                        <div class="w-32 shrink-0 rounded-lg overflow-hidden bg-zinc-800 relative group">
+                            <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=300&q=80" class="w-full h-44 object-cover">
+                            <div class="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-zinc-300">Toy Story 5</div>
+                        </div>
+                        <div class="w-32 shrink-0 rounded-lg overflow-hidden bg-zinc-800 relative group">
+                            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=300&q=80" class="w-full h-44 object-cover">
+                            <div class="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-zinc-300">Fim de Oak Street</div>
+                        </div>
+                        <div class="w-32 shrink-0 rounded-lg overflow-hidden bg-zinc-800 relative group">
+                            <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=300&q=80" class="w-full h-44 object-cover">
+                            <div class="absolute bottom-1 left-1 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-zinc-300">Corrida Contra o Tempo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TELA: AO VIVO (EXATA À SUA SEGUNDA IMAGEM) ================= -->
+            <div id="page-aovivo" class="page-content">
+                <!-- Player Banner Topo -->
+                <div class="relative w-full aspect-video bg-zinc-900 overflow-hidden border-b border-zinc-800">
+                    <video id="iptv-player" class="w-full h-full object-cover" controls autoplay muted></video>
+                    <div id="player-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-r from-red-900/40 via-red-600/20 to-black p-4 text-center">
+                        <span class="bg-red-600 text-white font-bold text-xs px-2 py-0.5 rounded mb-2 animate-pulse">● LIVE</span>
+                        <h2 class="text-white font-bold text-lg leading-tight drop-shadow" id="current-channel-title">FALTA POUCO PARA A TRANSMISSÃO</h2>
+                        <p class="text-xs text-zinc-300 mt-1">Em breve o sinal deste evento será liberado.</p>
+                    </div>
+                    
+                    <div class="absolute top-2 left-2 flex items-center space-x-2">
+                        <span class="text-xl font-extrabold text-white tracking-wider">IPTVEC</span>
+                    </div>
+                    <div class="absolute top-2 right-2 flex items-center space-x-2">
+                        <button class="p-1.5 bg-black/50 rounded-full text-white"><i data-lucide="heart" class="w-4 h-4"></i></button>
+                        <button class="p-1.5 bg-black/50 rounded-full text-white"><i data-lucide="help-circle" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <!-- Chips Categorias / Filtros Rápido -->
+                <div class="p-3 bg-black sticky top-0 z-30 border-b border-zinc-900">
+                    <!-- Categorias Superiores (Home, Filmes, Séries...) -->
+                    <div class="flex space-x-2 overflow-x-auto hide-scrollbar mb-2">
+                        <button onclick="filterCategory('TODOS')" class="cat-pill px-5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap active-pill">Filmes</button>
+                        <button onclick="filterCategory('SÉRIES')" class="cat-pill px-5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap">Séries</button>
+                        <button onclick="filterCategory('INFANTIL')" class="cat-pill px-5 py-1.5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold whitespace-nowrap">Infantil</button>
+                    </div>
+
+                    <!-- Filtros Inferiores (Todos, Favoritos, TV Aberta, UHD) -->
+                    <div class="flex space-x-2 overflow-x-auto hide-scrollbar">
+                        <button onclick="filterTag('TODOS')" class="px-4 py-1.5 rounded-full bg-zinc-800 text-white text-xs font-medium whitespace-nowrap">Todos</button>
+                        <button onclick="filterTag('FAVORITOS')" class="px-4 py-1.5 rounded-full bg-zinc-900 text-zinc-400 text-xs font-medium whitespace-nowrap">Favoritos</button>
+                        <button onclick="filterTag('TV ABERTA')" class="px-4 py-1.5 rounded-full bg-zinc-900 text-zinc-400 text-xs font-medium whitespace-nowrap">TV Aberta</button>
+                        <button onclick="filterTag('UHD')" class="px-4 py-1.5 rounded-full bg-zinc-900 text-zinc-400 text-xs font-medium whitespace-nowrap">UHD</button>
+                    </div>
+                </div>
+
+                <!-- LISTA COM CATEGORIAS AGRUPADAS E EXPANSÍVEIS (SEGUNDA IMAGEM) -->
+                <div id="m3u-category-container" class="divide-y divide-zinc-900">
+                    <!-- Gerado Dinamicamente via JS com base no M3U -->
+                </div>
+            </div>
+
+            <!-- ================= TELA: JOGOS ================= -->
+            <div id="page-jogos" class="page-content hidden p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-2xl font-extrabold text-white">IPTVEC</span>
+                    <button class="p-2 rounded-full bg-zinc-900"><i data-lucide="search" class="w-5 h-5 text-white"></i></button>
+                </div>
+
+                <h2 class="text-xl font-bold text-white mb-4">Jogos populares</h2>
+
+                <div class="space-y-3">
+                    <!-- Card de Jogo 1 -->
+                    <div class="bg-card rounded-xl p-4 border border-zinc-800">
+                        <div class="text-center text-xs font-semibold text-zinc-400 mb-3">Friendlies</div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col items-center w-1/3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center text-lg font-bold">🇦🇷</div>
+                                <span class="text-xs font-medium mt-2 text-zinc-200">Argentina</span>
+                            </div>
+                            <div class="flex flex-col items-center w-1/3">
+                                <span class="text-lg font-black text-zinc-300 italic">VS</span>
+                                <span class="text-[10px] text-zinc-400 mt-1">30/09 21:00</span>
+                                <span class="mt-2 bg-zinc-800 text-zinc-300 text-[10px] px-3 py-1 rounded-full border border-zinc-700">Não começou</span>
+                            </div>
+                            <div class="flex flex-col items-center w-1/3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center text-lg font-bold">🇧🇴</div>
+                                <span class="text-xs font-medium mt-2 text-zinc-200">Bolivia</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card de Jogo 2 -->
+                    <div class="bg-card rounded-xl p-4 border border-zinc-800">
+                        <div class="text-center text-xs font-semibold text-zinc-400 mb-3">UEFA Nations League</div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col items-center w-1/3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center text-lg font-bold">🇩🇰</div>
+                                <span class="text-xs font-medium mt-2 text-zinc-200">Denmark</span>
+                            </div>
+                            <div class="flex flex-col items-center w-1/3">
+                                <span class="text-lg font-black text-zinc-300 italic">VS</span>
+                                <span class="text-[10px] text-zinc-400 mt-1">01/10 15:45</span>
+                                <span class="mt-2 bg-zinc-800 text-zinc-300 text-[10px] px-3 py-1 rounded-full border border-zinc-700">Não começou</span>
+                            </div>
+                            <div class="flex flex-col items-center w-1/3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center text-lg font-bold">🇵🇹</div>
+                                <span class="text-xs font-medium mt-2 text-zinc-200">Portugal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TELA: PERFIL / CONFIGURAÇÕES IPTV ================= -->
+            <div id="page-perfil" class="page-content hidden p-4">
+                <div class="flex flex-col items-center mt-6 mb-6">
+                    <div class="w-20 h-20 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-600 mb-3 shadow-lg">
+                        <i data-lucide="user" class="w-10 h-10"></i>
+                    </div>
+                    <span class="text-base font-bold text-white">ID:u_23198084</span>
+                </div>
+
+                <!-- Configuração de Lista M3U -->
+                <div class="bg-zinc-900 border border-cyan-500/30 p-4 rounded-xl mb-6">
+                    <h3 class="text-sm font-bold text-cyan-400 mb-2 flex items-center gap-2">
+                        <i data-lucide="link" class="w-4 h-4"></i> Carregar Sua Lista M3U
+                    </h3>
+                    <input id="m3u-url-input" type="text" placeholder="Cole o Link da sua Lista M3U aqui..." class="w-full bg-black border border-zinc-700 rounded-lg p-2.5 text-xs text-white mb-2 focus:outline-none focus:border-cyan-500">
+                    <button onclick="loadCustomM3U()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs py-2.5 rounded-lg transition">Carregar e Atualizar Canais</button>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center py-3 border-b border-zinc-900">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="clock" class="w-5 h-5 text-zinc-400"></i>
+                            <span class="text-sm font-semibold text-white">Histórico</span>
+                        </div>
+                        <button class="text-xs text-zinc-400 border border-zinc-800 rounded-full px-3 py-1">Ver mais</button>
+                    </div>
+
+                    <div class="flex justify-between items-center py-3 border-b border-zinc-900">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="heart" class="w-5 h-5 text-zinc-400"></i>
+                            <span class="text-sm font-semibold text-white">Favoritos</span>
+                        </div>
+                        <button class="text-xs text-zinc-400 border border-zinc-800 rounded-full px-3 py-1">Ver mais</button>
+                    </div>
+
+                    <div class="bg-zinc-900/80 rounded-xl p-3 flex items-center justify-between border border-zinc-800/80 mt-4">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="settings" class="w-5 h-5 text-zinc-300"></i>
+                            <span class="text-sm text-zinc-200">Configurações</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-500"></i>
+                    </div>
+
+                    <div class="bg-zinc-900/80 rounded-xl p-3 flex items-center justify-between border border-zinc-800/80">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="message-square" class="w-5 h-5 text-zinc-300"></i>
+                            <span class="text-sm text-zinc-200">Feedback</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-500"></i>
+                    </div>
+
+                    <div class="bg-zinc-900/80 rounded-xl p-3 flex items-center justify-between border border-zinc-800/80">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="arrow-up-circle" class="w-5 h-5 text-zinc-300"></i>
+                            <span class="text-sm text-zinc-200">Atualizar</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-zinc-500 text-xs">
+                            <span>V1.0.1</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-zinc-900/80 rounded-xl p-3 flex items-center justify-between border border-zinc-800/80">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="info" class="w-5 h-5 text-zinc-300"></i>
+                            <span class="text-sm text-zinc-200">Sobre nós</span>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-500"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= BOTTOM NAVIGATION BAR (FIXA NO RODAPÉ) ================= -->
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-md border-t border-zinc-900 flex justify-around items-center z-50">
+            <button onclick="switchTab('inicio')" id="nav-inicio" class="nav-btn flex flex-col items-center space-y-1 text-zinc-500">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Início</span>
+            </button>
+            <button onclick="switchTab('aovivo')" id="nav-aovivo" class="nav-btn flex flex-col items-center space-y-1 text-cyan-400">
+                <i data-lucide="tv" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Ao vivo</span>
+            </button>
+            <button onclick="switchTab('jogos')" id="nav-jogos" class="nav-btn flex flex-col items-center space-y-1 text-zinc-500">
+                <i data-lucide="dices" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Jogos</span>
+            </button>
+            <button onclick="switchTab('perfil')" id="nav-perfil" class="nav-btn flex flex-col items-center space-y-1 text-zinc-500">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Perfil</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT PRINCIPAL E LÓGICA IPTV M3U -->
+    <script>
+        // Dados de Exemplo Padrão (Simulando Parse de M3U por Categorias)
+        const defaultM3UData = [
+            {
+                category: "FILMES",
+                icon: "clapperboard",
+                channels: [
+                    { id: "001", name: "Amazon Prime Video", logo: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                    { id: "002", name: "Amazon Prime Video 2", logo: "https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video.png", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                    { id: "003", name: "BAND Sports HD", logo: "https://via.placeholder.com/50x30/cc0000/ffffff?text=BAND", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+                ]
+            },
+            {
+                category: "SÉRIES",
+                icon: "tv",
+                channels: [
+                    { id: "001", name: "Netflix - FOX", logo: "https://via.placeholder.com/50x30/e50914/ffffff?text=NETFLIX", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                    { id: "002", name: "Warner TV HD", logo: "https://via.placeholder.com/50x30/0044ff/ffffff?text=WARNER", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+                ]
+            },
+            {
+                category: "INFANTIL",
+                icon: "baby",
+                channels: [
+                    { id: "001", name: "Cartoon Network - Disney", logo: "https://via.placeholder.com/50x30/000000/ffffff?text=CN", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+                ]
+            },
+            {
+                category: "ESPORTES",
+                icon: "trophy",
+                channels: [
+                    { id: "001", name: "ESPN - Sportv", logo: "https://via.placeholder.com/50x30/ff0000/ffffff?text=ESPN", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+                    { id: "002", name: "CazeTV", logo: "https://via.placeholder.com/50x30/ffff00/000000?text=CAZE", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+                ]
+            },
+            {
+                category: "NOTÍCIAS",
+                icon: "newspaper",
+                channels: [
+                    { id: "001", name: "GloboNews - CNN", logo: "https://via.placeholder.com/50x30/ff0000/ffffff?text=GNEWS", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+                ]
+            }
+        ];
+
+        let m3uData = [...defaultM3UData];
+        let hlsPlayer = null;
+
+        // Inicializador Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderCategories();
+        });
+
+        // Alternador de Abas Navegação
+        function switchTab(tabId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400');
+                btn.classList.add('text-zinc-500');
+            });
+            document.getElementById(`nav-${tabId}`).classList.remove('text-zinc-500');
+            document.getElementById(`nav-${tabId}`).classList.add('text-cyan-400');
+        }
+
+        // Renderiza as Categorias e Canais exatamente como na Imagem 2
+        function renderCategories() {
+            const container = document.getElementById('m3u-category-container');
+            container.innerHTML = '';
+
+            m3uData.forEach((catGroup, groupIndex) => {
+                const groupEl = document.createElement('div');
+                groupEl.className = "bg-black border-b border-zinc-900";
+
+                // Header da Categoria (FILMES, SÉRIES, INFANTIL...)
+                groupEl.innerHTML = `
+                    <div onclick="toggleCategory('cat-group-${groupIndex}')" class="flex items-center justify-between p-3 bg-black cursor-pointer hover:bg-zinc-900/50 transition">
+                        <div class="flex items-center space-x-2 text-cyan-400 font-extrabold text-sm tracking-wider">
+                            <i data-lucide="${catGroup.icon || 'tv'}" class="w-4 h-4"></i>
+                            <span>${catGroup.category}</span>
+                        </div>
+                        <i id="arrow-cat-group-${groupIndex}" data-lucide="chevron-down" class="w-4 h-4 text-zinc-400 transition-transform duration-300"></i>
+                    </div>
+
+                    <!-- Lista Interna de Canais -->
+                    <div id="cat-group-${groupIndex}" class="divide-y divide-zinc-900">
+                        ${catGroup.channels.map(ch => `
+                            <div onclick="playStream('${ch.url}', '${ch.name}')" class="flex items-center justify-between px-4 py-3 hover:bg-zinc-900 cursor-pointer transition">
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-xs text-zinc-500 font-mono w-6">${ch.id}</span>
+                                    <img src="${ch.logo}" class="w-10 h-6 object-contain bg-zinc-900 rounded px-1" alt="logo" onerror="this.src='https://via.placeholder.com/50x30/333/fff?text=TV'">
+                                    <span class="text-xs font-semibold text-zinc-200">${ch.name}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(groupEl);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Toggle para recolher/expandir categoria
+        function toggleCategory(id) {
+            const el = document.getElementById(id);
+            const arrow = document.getElementById(`arrow-${id}`);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            } else {
+                el.classList.add('hidden');
+                arrow.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        // Player de Vídeo IPTV HLS / M3U8
+        function playStream(url, title) {
+            const video = document.getElementById('iptv-player');
+            const placeholder = document.getElementById('player-placeholder');
+            const titleEl = document.getElementById('current-channel-title');
+
+            titleEl.innerText = title;
+            placeholder.classList.add('hidden');
+
+            if (Hls.isSupported()) {
+                if (hlsPlayer) hlsPlayer.destroy();
+                hlsPlayer = new Hls();
+                hlsPlayer.loadSource(url);
+                hlsPlayer.attachMedia(video);
+                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.play();
+            }
+        }
+
+        // Parser M3U Real a partir do Link
+        async function loadCustomM3U() {
+            const url = document.getElementById('m3u-url-input').value.trim();
+            if (!url) return alert('Por favor, insira uma URL M3U válida.');
+
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                parseM3UContent(text);
+                alert('Lista M3U carregada com sucesso!');
+                switchTab('aovivo');
+            } catch (err) {
+                alert('Erro ao carregar lista. Verifique a URL ou permissões de CORS.');
+            }
+        }
+
+        function parseM3UContent(m3uText) {
+            const lines = m3uText.split('\n');
+            const parsedGroups = {};
+
+            let currentChannel = null;
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const groupMatch = line.match(/group-title="([^"]+)"/);
+                    const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+                    const nameParts = line.split(',');
+                    const name = nameParts[nameParts.length - 1] || 'Canal Sem Nome';
+
+                    const group = groupMatch ? groupMatch[1].toUpperCase() : 'OUTROS';
+                    const logo = logoMatch ? logoMatch[1] : '';
+
+                    currentChannel = { name, logo, group };
+                } else if (line.length > 0 && !line.startsWith('#')) {
+                    if (currentChannel) {
+                        currentChannel.url = line;
+                        if (!parsedGroups[currentChannel.group]) {
+                            parsedGroups[currentChannel.group] = [];
+                        }
+                        const id = String(parsedGroups[currentChannel.group].length + 1).padStart(3, '0');
+                        parsedGroups[currentChannel.group].push({
+                            id,
+                            name: currentChannel.name,
+                            logo: currentChannel.logo,
+                            url: currentChannel.url
+                        });
+                        currentChannel = null;
+                    }
+                }
+            });
+
+            m3uData = Object.keys(parsedGroups).map(group => ({
+                category: group,
+                icon: "tv",
+                channels: parsedGroups[group]
+            }));
+
+            renderCategories();
+        }
+    </script>
+</body>
+</html>
