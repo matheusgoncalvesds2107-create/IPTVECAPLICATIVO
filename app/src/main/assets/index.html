@@ -1,0 +1,61 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>IPTVEC</title>
+
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050505;color:#fff;font-family:Arial,sans-serif}
+header{padding:14px 16px;border-bottom:1px solid #202020;position:sticky;top:0;background:#050505;z-index:5}
+.logo{font-size:22px;font-weight:900;color:#00d9ff}.sub{font-size:12px;color:#888;margin-top:3px}
+main{padding:12px 12px 70px}.box{background:#101010;border:1px solid #222;border-radius:14px;padding:12px;margin-bottom:12px}
+button,input{border:0;border-radius:10px;padding:12px;font-size:14px}button{background:#00a9c7;color:white;font-weight:bold}
+input{width:100%;background:#181818;color:white;border:1px solid #333;margin-bottom:8px}
+.row{display:flex;gap:8px}.row button{flex:1}.player{background:#000;border-radius:12px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;border-radius:12px;background:#000}.search{margin:10px 0}
+.cat{background:#0d0d0d;border:1px solid #252525;border-radius:12px;margin:7px 0;overflow:hidden}
+.cathead{padding:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}.cathead b{color:#00d9ff;font-size:13px}.count{color:#888;font-size:12px;white-space:nowrap}
+.item{padding:11px 13px;border-top:1px solid #1d1d1d;display:flex;gap:10px;align-items:center;cursor:pointer}.item img{width:42px;height:28px;object-fit:contain;background:#181818;border-radius:5px}.name{font-size:13px;flex:1}.hidden{display:none}
+.pager{display:flex;gap:8px;padding:10px;border-top:1px solid #222}.pager button{flex:1;padding:9px}.small{font-size:11px;color:#777;text-align:center;padding:7px}
+.progress{height:6px;background:#222;border-radius:8px;overflow:hidden;margin-top:8px}.bar{height:100%;width:0;background:#00d9ff}
+</style></head><body>
+<header><div class="logo">IPTVEC</div><div class="sub" id="status">Nenhuma lista carregada</div></header>
+<main>
+<div class="box"><div id="now" class="sub">Selecione um conteúdo acima para reproduzir.</div></div>
+<div class="box"><div class="row"><button onclick="Android.chooseFile()">📁 Abrir M3U</button><button onclick="loadUrl()">🌐 URL</button></div>
+<input id="url" placeholder="Cole a URL M3U aqui"><div class="progress"><div id="bar" class="bar"></div></div></div>
+<div class="box"><input id="search" placeholder="🔎 Buscar dentro da lista..." oninput="searchChanged()"><div id="cats"></div></div>
+</main>
+<script>
+let cats=[],active=null,page=0,limit=50;
+function q(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function startProgress(){status.textContent='Lendo lista...';bar.style.width='1%'}
+function setProgress(n){status.textContent='Lendo '+n.toLocaleString('pt-BR')+' itens...';bar.style.width=Math.min(95,5+n/5000)+'%'}
+function finishLoad(n,c){cats=c;status.textContent=n.toLocaleString('pt-BR')+' itens carregados em '+cats.length+' grupos';bar.style.width='100%';renderCats()}
+function loadError(m){status.textContent='Erro: '+m;bar.style.width='0'}
+function loadUrl(){let u=url.value.trim();if(u)Android.loadUrl(u)}
+function renderCats(){
+ let s=search.value.toLowerCase();
+ cats.forEach((c,i)=>{c.show=!s||c.name.toLowerCase().includes(s)})
+ cats= [...cats.filter(c=>c.show),...cats.filter(c=>!c.show)]
+ cats.forEach((c,i)=>c._i=i)
+ document.getElementById('cats').innerHTML=cats.filter(c=>c.show).map(c=>`<div class="cat"><div class="cathead" onclick="openCat(${c._i})"><b>${q(c.name)}</b><span class="count">${c.count.toLocaleString('pt-BR')} ▾</span></div><div id="cat-${c._i}"></div></div>`).join('')
+}
+function searchChanged(){renderCats()}
+function openCat(i){let c=cats[i];active=c;page=0;loadPage()}
+function loadPage(){
+ if(!active)return;let el=document.getElementById('cat-'+active._i);el.innerHTML='<div class="small">Carregando 50 itens...</div>'
+ Android.page(active.name,search.value.trim(),page*limit,limit)
+}
+function showItems(group,items,offset){
+ try {
+ let c=cats.find(x=>x.name===group);if(!c)return
+ let el=document.getElementById('cat-'+c._i)
+ let term=search.value.trim()
+ let html=items.map((x,i)=>`<div class="item" onclick="play(${JSON.stringify(x.url)},${JSON.stringify(x.name)})"><img src="${q(x.logo)}" onerror="this.style.visibility='hidden'"><span class="name">${q(x.name)}</span></div>`).join('')
+ el.innerHTML=html||'<div class="small">Nenhum item encontrado.</div>'
+ el.innerHTML += `<div class="small">Página ${page+1} • mostrando ${items.length} itens</div><div class="pager"><button onclick="prevPage()" ${page===0?'disabled':''}>◀ Anterior</button><button onclick="nextPage()">Próxima ▶</button></div>`
+ } catch(e) { el.innerHTML='<div class="small">Erro ao mostrar itens: '+q(e.message)+'</div>' }
+}
+function prevPage(){if(page>0){page--;loadPage()}}
+function nextPage(){page++;loadPage()}
+function setNow(n){document.getElementById('now').textContent=n}
+function play(u,n){setNow(n);Android.play(u,n)}
+</script></body></html>
