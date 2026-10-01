@@ -1,0 +1,47 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>IPTVEC</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050505;color:#fff;font-family:Arial,sans-serif}
+header{padding:14px 16px;border-bottom:1px solid #202020;position:sticky;top:0;background:#050505;z-index:5}
+.logo{font-size:22px;font-weight:900;color:#00d9ff}.sub{font-size:12px;color:#888;margin-top:3px}
+main{padding:12px 12px 70px}.box{background:#101010;border:1px solid #222;border-radius:14px;padding:12px;margin-bottom:12px}
+button,input{border:0;border-radius:10px;padding:12px;font-size:14px}button{background:#00a9c7;color:white;font-weight:bold}button:disabled{opacity:.35}
+input{width:100%;background:#181818;color:white;border:1px solid #333;margin-bottom:8px}
+.row{display:flex;gap:8px}.row button{flex:1}
+.poster{background:#0b0b0b;border-radius:12px;min-height:115px;display:flex;align-items:center;gap:15px;padding:16px;border:1px solid #252525}
+.poster img{width:100px;height:70px;object-fit:contain;background:#151515;border-radius:10px}.poster .ptitle{font-weight:800;font-size:16px}.poster .pstatus{font-size:11px;color:#777;margin-top:5px}
+.search{margin:10px 0}.catgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cat{background:#242424;border:1px solid #303030;border-radius:4px;margin:0;overflow:hidden;min-height:76px}.cathead{padding:13px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:76px}.cathead b{color:#fff;font-size:15px;font-weight:500;line-height:1.15}.count{color:#bbb;font-size:12px;white-space:nowrap}.cat.open{grid-column:1 / -1;background:#0d0d0d;border:1px solid #252525;border-radius:12px}.cat.open .cathead{border-bottom:1px solid #303030}.cat.open .cathead b{color:#00d9ff;font-weight:800;font-size:14px}.cat.open .count{color:#999}
+
+.item{padding:9px 13px;border-top:1px solid #1d1d1d;display:flex;gap:12px;align-items:center;cursor:pointer;min-height:58px}.item:active{background:#161616}
+.itemLogo{width:52px;height:38px;object-fit:contain;background:#171717;border-radius:7px;display:block;padding:2px}.logoFallback{width:52px;height:38px;border-radius:7px;background:#171717;display:flex;align-items:center;justify-content:center;color:#00d9ff;font-size:11px;font-weight:bold}.name{font-size:13px;flex:1}.quality{font-size:10px;color:#777;white-space:nowrap}.hidden{display:none}
+.pager{display:flex;gap:8px;padding:10px;border-top:1px solid #222}.pager button{flex:1;padding:9px}.small{font-size:11px;color:#777;text-align:center;padding:8px}.progress{height:6px;background:#222;border-radius:8px;overflow:hidden;margin-top:8px}.bar{height:100%;width:0;background:#00d9ff}
+</style></head><body>
+<header><div class="logo">IPTVEC</div><div class="sub" id="status">Nenhuma lista carregada</div></header>
+<main>
+<div class="box"><div id="poster" class="poster"><div class="logoFallback">TV</div><div><div class="ptitle">IPTVEC</div><div class="pstatus">Escolha um canal para começar</div></div></div></div>
+<div class="box"><div class="row"><button onclick="Android.chooseFile()">📁 Abrir M3U</button><button onclick="loadUrl()">🌐 URL</button></div>
+<input id="url" placeholder="Cole a URL M3U aqui"><div class="progress"><div id="bar" class="bar"></div></div></div>
+<div class="box"><input id="search" placeholder="🔎 Buscar canal, filme ou série..." oninput="searchChanged()"><div id="cats"></div></div>
+</main>
+<script>
+let cats=[],active=null,page=0,limit=50;
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function jsq(s){return JSON.stringify(String(s||''))}
+function startProgress(){document.getElementById('status').textContent='Lendo lista...';document.getElementById('bar').style.width='1%'}
+function setProgress(n){document.getElementById('status').textContent='Lendo '+n.toLocaleString('pt-BR')+' itens...';document.getElementById('bar').style.width=Math.min(95,5+n/5000)+'%'}
+function finishLoad(n,c){cats=c;document.getElementById('status').textContent=n.toLocaleString('pt-BR')+' itens carregados em '+cats.length+' grupos';document.getElementById('bar').style.width='100%';renderCats()}
+function loadError(m){document.getElementById('status').textContent='Erro: '+m;document.getElementById('bar').style.width='0'}
+function pageError(group,m){let i=cats.findIndex(x=>x.name===group);if(i>=0){let el=document.getElementById('cat-'+i);if(el)el.innerHTML='<div class="small">Erro ao carregar canais: '+esc(m)+'</div>'}}
+function loadUrl(){let u=document.getElementById('url').value.trim();if(u)Android.loadUrl(u)}
+function renderCats(){let s=document.getElementById('search').value.toLowerCase().trim();document.getElementById('cats').innerHTML=`<div class="catgrid">${cats.map((c,i)=>{let show=!s||c.name.toLowerCase().includes(s);return `<div class="cat" id="box-${i}" style="display:${show?'block':'none'}"><div class="cathead" onclick="openCat(${i})"><b>${esc(c.name)}</b><span class="count">${c.count.toLocaleString('pt-BR')} canais</span></div><div id="cat-${i}"></div></div>`}).join('')}</div>`}
+function searchChanged(){renderCats()}
+function openCat(i){document.querySelectorAll('.cat.open').forEach(x=>x.classList.remove('open'));active=cats[i];page=0;let box=document.getElementById('box-'+i);box.classList.add('open');let el=document.getElementById('cat-'+i);el.innerHTML='<div class="small">Carregando canais...</div>';try{loadPage()}catch(e){el.innerHTML='<div class="small">Erro ao abrir categoria: '+esc(e.message)+'</div>'}}
+function loadPage(){if(!active)return;let idx=cats.indexOf(active);let el=document.getElementById('cat-'+idx);if(!el)return;el.innerHTML='<div class="small">Carregando 50 canais...</div>';if(!window.Android||!Android.page){el.innerHTML='<div class="small">Erro: ponte Android indisponível.</div>';return}Android.page(active.name,document.getElementById('search').value.trim(),page*limit,limit)}
+function showItems(group,items,offset){let i=cats.findIndex(x=>x.name===group);if(i<0)return;let box=document.getElementById('box-'+i);if(box)box.classList.add('open');let el=document.getElementById('cat-'+i);let html=items.map((x,n)=>{let fb=(x.name||'TV').trim().slice(0,3).toUpperCase();let id='logo-'+i+'-'+n;let logo=x.logo||'';let img=logo?`<img class="itemLogo" id="${id}" src="${esc(logo)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:`<span class="itemLogo" id="${id}" style="display:none"></span>`;let fallback=`<span class="logoFallback" style="display:${logo?'none':'flex'}">${esc(fb)}</span>`;let quality=(x.name.match(/\b(4K|FHD|HD|SD)\b/i)||[])[1]||'';return `<div class="item" onclick='play(${jsq(x.url)},${jsq(x.name)},${jsq(x.logo)})'>${img}${fallback}<span class="name">${esc(x.name)}</span><span class="quality">${esc(quality)}</span></div>`}).join('');el.innerHTML=html||'<div class="small">Nenhum item encontrado.</div>';items.forEach((x,n)=>{if(x.logo)Android.loadImage(x.logo,i+'|'+n)});el.innerHTML+=`<div class="small">Página ${page+1} • ${items.length} itens</div><div class="pager"><button onclick="prevPage()" ${page===0?'disabled':''}>◀ Anterior</button><button onclick="nextPage()" ${items.length<limit?'disabled':''}>Próxima ▶</button></div>`}
+function prevPage(){if(page>0){page--;loadPage()}}
+function nextPage(){page++;loadPage()}
+function setLogo(token,data){let p=token.split('|'),el=document.getElementById('logo-'+p[0]+'-'+p[1]);if(!el)return;let old=el.parentElement;if(el.tagName==='IMG'){el.src=data}else{el.outerHTML=`<img class="itemLogo" id="logo-${p[0]}-${p[1]}" src="${data}">`;}}
+function setPoster(name,logo,status){let p=document.getElementById('poster');let img=logo?`<img id="posterImg" src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logoFallback">TV</div>`;p.innerHTML=img+`<div><div class="ptitle">${esc(name)}</div><div class="pstatus">${esc(status||'Preparando reprodução...')}</div></div>`}
+function setNow(n){setPoster(n,'','Preparando reprodução...')}
+function play(u,n,l){setPoster(n,l,'Abrindo canal...');Android.play(u,n,l||'')}
+</script></body></html>
